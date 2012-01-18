@@ -18,3 +18,49 @@ function todos_install() {
   $body_instance['type'] = 'text_summary_or_trimmed';
   field_update_instance($body_instance);
 }
+/**
+ * Implements hook_schema() and adds a table to store todo items
+ */
+function todos_schema() {
+  return array(
+    'todo_items' => array(
+      'description' => 'Stores todo_items for todo lists.',
+      'fields' => array(
+        'pid' => array(
+          'type' => 'serial',
+          'not null' => TRUE,
+          'description' => 'Primary key: Unique todo_item ID.',
+        ),
+        'name' => array(
+          'description' => 'The name of the todo_item entity.',
+          'type' => 'varchar',
+          'length' => 32,
+          'not null' => TRUE,
+          'default' => '',
+        ),
+        'nid' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+          'description' => 'The {node}.nid of the associated node.',
+        ),
+        'uid' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+          'description' => 'The {users}.uid of the associated user.',
+        ),
+      ),
+      'indexes' => array(
+        'uid' => array('uid'),
+      ),
+      'foreign keys' => array(
+        'uid' => array('users' => 'uid'),
+        //'name' => array('entity_todo_items' => 'name'),
+      ),
+      'primary key' => array('pid'),
+    ),
+  );
+}

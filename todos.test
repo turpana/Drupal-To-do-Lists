@@ -19,11 +19,18 @@ class TodosTestCase extends DrupalWebTestCase {
 
   function setUp() {
     parent::setUp('todos');
+    // Create users.
+    $permissions = array(
+      'access content', 
+      'create todo_list content', 
+      'edit own todo_list content',
+      'delete own todo_list content'
+    );
+    $this->priviledged_user = $this->drupalCreateUser($permissions);
   }
 
-  function testNodeCreation() {
-    // Create and login user.
-    $account = $this->drupalCreateUser(array('access content', 'create todo_list content'));
+  function testPriviledgedUser() {
+    $account = $this->priviledged_user;
     $this->drupalLogin($account);
     // Create a new todo list.
     $edit = array(
@@ -32,5 +39,13 @@ class TodosTestCase extends DrupalWebTestCase {
     );
     $this->drupalPost('node/add/todo-list', $edit, t('Save'));
     $this->assertText("Todo List ". $edit['title'] . " has been created", "Found node creation message");
+    // Update todo list title and description
+    $edited = array(
+      'title' => $this->randomName(8),
+      'body[und][0][value]' => $this->randomName(16),
+    );
+    $this->drupalPost('node/1/edit', $edited, t('Save'));
+    $this->assertText("Todo List ". $edited['title'] . " has been updated.", "Found node update message");
+    $this->assertText($edited['body[und][0][value]'], "Found edited node body");
   }
 }

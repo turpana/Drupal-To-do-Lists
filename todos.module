@@ -13,8 +13,25 @@ function todos_permission() {
       'title' => t('Create a todo list'),
       'description' => t('Create a new todo list'),
     ),
+    'edit own todo_list content' => array(
+      'title' => t('Edit own todo list'),
+      'description' => t('Edit own todo list'),
+    ),
+    'edit any todo_list content' => array(
+      'title' => t('Edit any todo list'),
+      'description' => t('Edit any todo list'),
+    ),
+    'delete own todo_list content' => array(
+      'title' => t('Delete own todo list'),
+      'description' => t('Delete own todo list'),
+    ),
+    'delete any todo_list content' => array(
+      'title' => t('Delete any todo list'),
+      'description' => t('Delete any todo list'),
+    ),
   );
 }
+
 /**
  * Implements hook_node_info().
  */
@@ -42,18 +59,59 @@ function todo_list_node_access($node, $op, $account) {
     // If $node is not object and $op is not create, don't really know what's going on so deny access.
     return NODE_ACCESS_DENY;
   }
+
   switch ($op) {
   case 'create':
     if (user_access('create todo_list content', $account)) {
       return NODE_ACCESS_ALLOW;
     }
+    break;
+
+  case 'update':
+    if (user_access('edit own todo_list content', $account) && $is_author ||
+      user_access('edit any todo_list content', $account)) {
+      return NODE_ACCESS_ALLOW;
+    }
+    break;
+
+  case 'delete':
+    if (user_access('delete own todo_list content', $account) && $is_author ||
+      user_access('edit own todo_list content', $account)) {
+      return NODE_ACCESS_ALLOW;
+    }
+    break;
+
   default:
     return NODE_ACCESS_DENY;
   }
 }
+
 /**
  * Implements hook_form() with the standard default node form.
  */
 function todo_list_form($node, $form_state) {
   return node_content_form($node, $form_state);
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function todo_list_entity_info() {
+  return array(
+    'todo_item' => array(
+      'label' => t('Todo Item'),
+      'plural label' => t('Todo Items'),
+      'description' => t('Entity type used by teh Todo List Content Type module'),
+      'entity class' => 'EntityClass',
+      'controller class' => 'EntityAPIController',
+      'base table' => 'todo_item',
+      'fieldable' => TRUE,
+      'entity keys' => array(
+        'id' => 'pid',
+        // 'bundle' => 'name', // Not sure if this is needed
+      ),
+      'label callback' => 'entity_class_label',
+      'uri callback' => 'entity_class_uri',
+    ),
+  );
 }
