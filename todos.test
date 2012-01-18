@@ -11,7 +11,7 @@ class TodosTestCase extends DrupalWebTestCase {
 
   public static function getInfo() {
     return array(
-      'name' => 'Todo Example',
+      'name' => 'Todo List Content Type',
       'description' => 'Ensures that the todos content type provided functions properly.',
       'group' => 'Todos',
     );
@@ -22,4 +22,8 @@ class TodosTestCase extends DrupalWebTestCase {
   }
 
   function testNodeCreation() {
+    // Create and login user.
+    $account = $this->drupalCreateUser(array('access content', 'create todo_list content'));
+    $this->drupalLogin($account);
+  }
 }

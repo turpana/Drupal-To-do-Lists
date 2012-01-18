@@ -1,0 +1,18 @@
+<?php
+/**
+* @file
+* Module file for Todo List Content Type module
+*/
+
+/**
+ * Implements hook_permission().
+ */ 
+function todos_permission() {
+  return array(
+    'create todo_list content' => array(
+      'title' => t('Create a todo list'),
+      'description' => t('Create a new todo list'),
+    ),
+  );
+}
+
