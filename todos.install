@@ -9,23 +9,12 @@
  * Implements hook_install().
  */
 function todos_install() {
-  // Get t() function, which is unavailable during installation
   $t = get_t();
-  // Define the node type as an associative array.
-  $todo = array(
-    'type' => 'todo_list',
-    'name' => $t('Todo List'),
-    'base' => 'todo_list',
-    'description' => $t('Use this to create a new list of todo items'),
-    'title_lable' => $t('Title'),
-    'custom' => TRUE,
-  );
-  // Complete the node type definition by setting defaults not already declared
-  $content_type = node_type_set_defaults($todo);
-
+  node_types_rebuild();
+  $types = node_type_get_types();
   // Add a body field and set the body label
-  node_add_body_field($content_type, $t('Description'));
-
-  // Save the content type
-  node_type_save($content_type);
+  node_add_body_field($types['todo_list'], $t('Description'));
+  $body_instance = field_info_instance('node', 'body', 'todo_list');
+  $body_instance['type'] = 'text_summary_or_trimmed';
+  field_update_instance($body_instance);
 }

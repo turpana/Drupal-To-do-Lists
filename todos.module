@@ -15,4 +15,45 @@ function todos_permission() {
     ),
   );
 }
+/**
+ * Implements hook_node_info().
+ */
+function todos_node_info() {
+  return array(
+    'todo_list' => array(
+      'name' => t('Todo List'),
+      'base' => t('todo_list'),
+      'description' => t('Use this to create a new list of todo items'),
+      'has_title' => TRUE,
+      'title_label' => t('Title'),
+    ),
+  );
+}
 
+/**
+ * Implements hook_node_access().
+ */
+function todo_list_node_access($node, $op, $account) {
+  if (is_object($node)) {
+    $is_author = $account->uid == $node->uid;
+  } else if ($op == 'create') {
+    $is_author = TRUE;
+  } else {
+    // If $node is not object and $op is not create, don't really know what's going on so deny access.
+    return NODE_ACCESS_DENY;
+  }
+  switch ($op) {
+  case 'create':
+    if (user_access('create todo_list content', $account)) {
+      return NODE_ACCESS_ALLOW;
+    }
+  default:
+    return NODE_ACCESS_DENY;
+  }
+}
+/**
+ * Implements hook_form() with the standard default node form.
+ */
+function todo_list_form($node, $form_state) {
+  return node_content_form($node, $form_state);
+}

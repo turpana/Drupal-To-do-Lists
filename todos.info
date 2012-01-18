@@ -3,4 +3,6 @@ description = Adds a content type which lists items that need to be done
 package = Productivity
 core = 7.x
 dependencies[] = entity
+files[] = todos.install
+files[] = todos.module
 files[] = todos.test

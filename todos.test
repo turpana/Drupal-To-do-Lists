@@ -25,5 +25,12 @@ class TodosTestCase extends DrupalWebTestCase {
     // Create and login user.
     $account = $this->drupalCreateUser(array('access content', 'create todo_list content'));
     $this->drupalLogin($account);
+    // Create a new todo list.
+    $edit = array(
+      'title' => $this->randomName(8),
+      'body[und][0][value]' => $this->randomName(16),
+    );
+    $this->drupalPost('node/add/todo-list', $edit, t('Save'));
+    $this->assertText("Todo List ". $edit['title'] . " has been created", "Found node creation message");
   }
 }
