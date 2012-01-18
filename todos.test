@@ -79,6 +79,9 @@ class TodosTestCase extends DrupalWebTestCase {
       'body[und][0][value]' => $this->randomName(16),
     );
     $this->drupalPost('node/add/todo-list', $edit, t('Save'));
-    $this->assertText("Add a todo item", "Found add todo item text");
+    $edit_todo = array(
+      'title' => $this->randomName(8),
+    );
+    $this->drupalPost('node/1', $edit_todo, t('Add'));
   }
 }
