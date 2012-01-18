@@ -1,0 +1,25 @@
+<?php
+
+/**
+ * @file
+ * Simpletest case for todos module.
+ *
+ * Verify todos module functionality.
+ */
+class TodosTestCase extends DrupalWebTestCase {
+  protected $priviledged_user;
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Todo Example',
+      'description' => 'Ensures that the todos content type provided functions properly.',
+      'group' => 'Todos',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('todos');
+  }
+
+  function testNodeCreation() {
+}
