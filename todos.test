@@ -42,7 +42,7 @@ class TodosTestCase extends DrupalWebTestCase {
       'body[und][0][value]' => $this->randomName(16),
     );
     $this->drupalPost('node/add/todo-list', $edit, t('Save'));
-    $this->assertText("Todo List ". $edit['title'] . " has been created", "Found node creation message");
+    $this->assertText("Todo List " . $edit['title'] . " has been created", "Found node creation message");
 
     // Update todo list title and description
     $edited = array(
@@ -50,7 +50,7 @@ class TodosTestCase extends DrupalWebTestCase {
       'body[und][0][value]' => $this->randomName(16),
     );
     $this->drupalPost('node/1/edit', $edited, t('Save'));
-    $this->assertText("Todo List ". $edited['title'] . " has been updated.", "Found node update message");
+    $this->assertText("Todo List " . $edited['title'] . " has been updated.", "Found node update message");
     $this->assertText($edited['body[und][0][value]'], "Found edited node body");
 
     $this->drupalLogin($this->other_user);
@@ -66,7 +66,19 @@ class TodosTestCase extends DrupalWebTestCase {
     $this->drupalLogin($this->can_create_todos);
     $this->drupalPost('node/1/edit', array(), t('Delete'));
     $this->drupalPost('node/1/delete',array(), t('Delete'));
-    $this->assertText("Todo List ". $edited['title'] . " has been deleted.", "Found node delete message");
+    $this->assertText("Todo List " . $edited['title'] . " has been deleted.", "Found node delete message");
 
+  }
+
+  function testEntityType() {
+    $this->drupalLogin($this->can_create_todos);
+
+    // Create new todo
+    $edit = array(
+      'title' => $this->randomName(8),
+      'body[und][0][value]' => $this->randomName(16),
+    );
+    $this->drupalPost('node/add/todo-list', $edit, t('Save'));
+    $this->assertText("Add a todo item", "Found add todo item text");
   }
 }
