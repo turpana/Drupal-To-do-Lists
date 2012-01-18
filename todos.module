@@ -51,13 +51,14 @@ function todos_node_info() {
  * Implements hook_node_access().
  */
 function todo_list_node_access($node, $op, $account) {
+  drupal_set_message($op);
   if (is_object($node)) {
     $is_author = $account->uid == $node->uid;
   } else if ($op == 'create') {
     $is_author = TRUE;
   } else {
     // If $node is not object and $op is not create, don't really know what's going on so deny access.
-    return NODE_ACCESS_DENY;
+    return NODE_ACCESS_IGNORE;
   }
 
   switch ($op) {
@@ -82,7 +83,7 @@ function todo_list_node_access($node, $op, $account) {
     break;
 
   default:
-    return NODE_ACCESS_DENY;
+    return NODE_ACCESS_IGNORE;
   }
 }
 

@@ -7,7 +7,9 @@
  * Verify todos module functionality.
  */
 class TodosTestCase extends DrupalWebTestCase {
-  protected $priviledged_user;
+  protected $administrator;
+  protected $can_create_todos;
+  protected $other_user;
 
   public static function getInfo() {
     return array(
@@ -26,12 +28,14 @@ class TodosTestCase extends DrupalWebTestCase {
       'edit own todo_list content',
       'delete own todo_list content'
     );
-    $this->priviledged_user = $this->drupalCreateUser($permissions);
+    $this->can_create_todos = $this->drupalCreateUser($permissions);
+    $this->other_user = $this->drupalCreateUser(array('access content'));
   }
 
-  function testPriviledgedUser() {
-    $account = $this->priviledged_user;
-    $this->drupalLogin($account);
+  function testContentType() {
+
+    $this->drupalLogin($this->can_create_todos);
+
     // Create a new todo list.
     $edit = array(
       'title' => $this->randomName(8),
@@ -39,6 +43,7 @@ class TodosTestCase extends DrupalWebTestCase {
     );
     $this->drupalPost('node/add/todo-list', $edit, t('Save'));
     $this->assertText("Todo List ". $edit['title'] . " has been created", "Found node creation message");
+
     // Update todo list title and description
     $edited = array(
       'title' => $this->randomName(8),
@@ -47,5 +52,21 @@ class TodosTestCase extends DrupalWebTestCase {
     $this->drupalPost('node/1/edit', $edited, t('Save'));
     $this->assertText("Todo List ". $edited['title'] . " has been updated.", "Found node update message");
     $this->assertText($edited['body[und][0][value]'], "Found edited node body");
+
+    $this->drupalLogin($this->other_user);
+    $this->drupalGet('node/1');
+    $this->assertResponse(200, t('Make sure user can view other todo list'));
+
+    $this->drupalGet('node/1/edit');
+    $this->assertResponse(403, t('Make sure other user cannot edit todo list'));
+    $this->drupalGet('node/1/delete');
+    $this->assertResponse(403, t('Make sure other user cannot delete todo list'));
+
+    // Delete a todo list
+    $this->drupalLogin($this->can_create_todos);
+    $this->drupalPost('node/1/edit', array(), t('Delete'));
+    $this->drupalPost('node/1/delete',array(), t('Delete'));
+    $this->assertText("Todo List ". $edited['title'] . " has been deleted.", "Found node delete message");
+
   }
 }
