@@ -1,5 +1,5 @@
-name = Todo List Content Type
-description = Adds a content type which lists items that need to be done
+name = Todo List Bundle
+description = Adds a content type which lists item entities that need to be done
 package = Productivity
 core = 7.x
 dependencies[] = entity

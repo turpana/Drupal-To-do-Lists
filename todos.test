@@ -83,5 +83,7 @@ class TodosTestCase extends DrupalWebTestCase {
       'title' => $this->randomName(8),
     );
     $this->drupalPost('node/1', $edit_todo, t('Add'));
+    $this->assertText($edit_todo['title']);
   }
+  // Todos create test to make sure nodes and table are deleted on uninstall
 }
