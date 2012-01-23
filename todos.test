@@ -13,8 +13,8 @@ class TodosTestCase extends DrupalWebTestCase {
 
   public static function getInfo() {
     return array(
-      'name' => 'Todo List Content Type',
-      'description' => 'Ensures that the todos content type provided functions properly.',
+      'name' => 'Todo Lists',
+      'description' => 'Ensures that the todos and todo lists functions properly.',
       'group' => 'Todos',
     );
   }
