@@ -84,6 +84,11 @@ class TodosTestCase extends DrupalWebTestCase {
     );
     $this->drupalPost('node/1', $edit_todo, t('Add'));
     $this->assertText($edit_todo['title']);
+    // Edit a todo
+    $edit_todo['title'] = $this->randomName(8);
+    $this->drupalPost('todo-item/1/edit', $edit_todo, t('Save'));
+    $this->assertText($edit_todo['title']);
+    // Create multiple todos
     $edit_todo_2 = array(
       'title' => $this->randomName(8),
     );
