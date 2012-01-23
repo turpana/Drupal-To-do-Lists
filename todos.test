@@ -39,7 +39,7 @@ class TodosTestCase extends DrupalWebTestCase {
     // Create a new todo list.
     $edit = array(
       'title' => $this->randomName(8),
-      'body[und][0][value]' => $this->randomName(16),
+      'body[und][0][value]' => $this->randomName(8),
     );
     $this->drupalPost('node/add/todo-list', $edit, t('Save'));
     $this->assertText("Todo List " . $edit['title'] . " has been created", "Found node creation message");
@@ -47,7 +47,7 @@ class TodosTestCase extends DrupalWebTestCase {
     // Update todo list title and description
     $edited = array(
       'title' => $this->randomName(8),
-      'body[und][0][value]' => $this->randomName(16),
+      'body[und][0][value]' => $this->randomName(255),
     );
     $this->drupalPost('node/1/edit', $edited, t('Save'));
     $this->assertText("Todo List " . $edited['title'] . " has been updated.", "Found node update message");
@@ -74,16 +74,25 @@ class TodosTestCase extends DrupalWebTestCase {
     $this->drupalLogin($this->can_create_todos);
 
     // Create new todo
-    $edit = array(
+    $todo_list = array(
       'title' => $this->randomName(8),
-      'body[und][0][value]' => $this->randomName(16),
+      'body[und][0][value]' => $this->randomName(255),
     );
-    $this->drupalPost('node/add/todo-list', $edit, t('Save'));
+    $this->drupalPost('node/add/todo-list', $todo_list, t('Save'));
     $edit_todo = array(
       'title' => $this->randomName(8),
     );
     $this->drupalPost('node/1', $edit_todo, t('Add'));
     $this->assertText($edit_todo['title']);
+    $edit_todo_2 = array(
+      'title' => $this->randomName(8),
+    );
+    $this->drupalPost('node/1', $edit_todo_2, t('Add'));
+    $this->assertText($edit_todo_2['title']);
+    $edit_todo_3 = array(
+      'title' => $this->randomName(129),
+    );
+    $this->drupalPost('node/1', $edit_todo_3, t('Add'));
   }
   // Todos create test to make sure nodes and table are deleted on uninstall
 }

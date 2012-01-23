@@ -35,14 +35,22 @@ function todos_schema() {
         'title' => array(
           'description' => 'The title of the todo_item entity.',
           'type' => 'varchar',
-          'length' => 32,
+          'length' => 255,
           'not null' => TRUE,
         ),
-        'nid' => array(
+        'lid' => array(
           'type' => 'int',
           'unsigned' => TRUE,
           'not null' => TRUE,
+          'default' => 0,
           'description' => 'The {node}.nid of the associated node.',
+        ),
+        'created' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+          'description' => 'The UNIX timestamp at item creation.',
         ),
         'uid' => array(
           'type' => 'int',
