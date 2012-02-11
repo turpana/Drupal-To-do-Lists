@@ -1,17 +1,43 @@
 <?php
+
 /**
 * @file
-* Module file for Todo List Content Type module
+* Module file for Todo List module
 */
+
 /**
- * Implements hook_menu().
+ * MODULE PATHS
+ */
+
+/**
+ * Implements hook_menu() 
+ * Defines paths module will use
  */
 function todos_menu() {
-  $items['todo-item/%todo_item/edit'] = array(
-    'title' => 'Todo item',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('todo_item_edit_form', 1),
-    'access callback' => TRUE,
+  $items['todos'] = array(
+    'title' => 'My todo lists',
+    'page callback' => 'todos_user_todo_lists',
+    'access arguments' => array('manage own todos'),
+    'weight' => 10, 
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['todos/list/%todo_list'] = array(
+    'title callback' => 'todos_entity_title',
+    'title arguments' => array(2),
+    'page callback' => 'todos_todo_list',
+    'page arguments' => array(2),
+    'access callback' => 'todos_enforce_permissions',
+    'access arguments' => array(2),
+    'weight' => 10,
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['todos/item/%todo_item/completed'] = array(
+    'title callback' => 'todos_entity_title',
+    'title arguments' => array(2),
+    'page callback' => 'todos_todo_item_completed',
+    'page arguments' => array(2),
+    'access callback' => 'todos_enforce_permissions',
+    'access arguments' => array(2),
     'weight' => 10,
     'type' => MENU_CALLBACK,
   );
@@ -19,181 +45,235 @@ function todos_menu() {
 }
 
 /**
+ * ACCESS FUNCTIONS
+ */
+
+/**
  * Implements hook_permission().
+ * Defines what permissions will be enforced by module
  */ 
 function todos_permission() {
   return array(
-    'create todo_list content' => array(
-      'title' => t('Create a todo list'),
-      'description' => t('Create a new todo list'),
+    'manage own todos' => array(
+      'title' => t('Manage own todo lists and items'),
+      'description' => t('Create, edit, and delete own todo lists and items'),
     ),
-    'edit own todo_list content' => array(
-      'title' => t('Edit own todo list'),
-      'description' => t('Edit own todo list'),
-    ),
-    'edit any todo_list content' => array(
-      'title' => t('Edit any todo list'),
-      'description' => t('Edit any todo list'),
-    ),
-    'delete own todo_list content' => array(
-      'title' => t('Delete own todo list'),
-      'description' => t('Delete own todo list'),
-    ),
-    'delete any todo_list content' => array(
-      'title' => t('Delete any todo list'),
-      'description' => t('Delete any todo list'),
+    'manage any todos' => array(
+      'title' => t('Manage any todo lists and items'),
+      'description' => t('Create, edit, and delete any todo lists or items'),
     ),
   );
 }
 
 /**
- * Implements hook_node_info().
+ * Enforces access permissions for entity types todo_list and todo_item
+ *
+ * @param $todo_entity¬
+ *   Entity object to check permission for.
  */
-function todos_node_info() {
-  return array(
-    'todo_list' => array(
-      'name' => t('Todo List'),
-      'base' => t('todo_list'),
-      'description' => t('Use this to create a new list of todo items'),
-      'has_title' => TRUE,
-      'title_label' => t('Title'),
-    ),
-  );
-}
-
-/**
- * Implements hook_node_access().
- */
-function todo_list_node_access($node, $op, $account) {
-  if (is_object($node)) {
-    $is_author = $account->uid == $node->uid;
-  } else if ($op == 'create') {
-    $is_author = TRUE;
-  } else {
-    // If $node is not object and $op is not create, don't really know what's going on so deny access.
-    return NODE_ACCESS_IGNORE;
+function todos_enforce_permissions($todo_entity, $account = NULL){
+  if ($account == null) {
+    global $user;
+    $account = $user;
   }
+  $is_author = $account->uid == $todo_entity->uid;
 
-  switch ($op) {
-  case 'create':
-    if (user_access('create todo_list content', $account)) {
-      return NODE_ACCESS_ALLOW;
-    }
-    break;
-
-  case 'update':
-    if (user_access('edit own todo_list content', $account) && $is_author ||
-      user_access('edit any todo_list content', $account)) {
-      return NODE_ACCESS_ALLOW;
-    }
-    break;
-
-  case 'delete':
-    if (user_access('delete own todo_list content', $account) && $is_author ||
-      user_access('edit own todo_list content', $account)) {
-      return NODE_ACCESS_ALLOW;
-    }
-    break;
-
-  default:
-    return NODE_ACCESS_IGNORE;
-  }
+  if (user_access('manage own todos', $account) && $is_author) return TRUE;
+  elseif (user_access('manage any todos')) return TRUE;
+  
+  return FALSE; // No access for any condition no accounted for
 }
 
 /**
- * Implements hook_form() with the standard default node form.
+ * ENTITY DEFINITIONS
  */
-function todo_list_form($node, $form_state) {
-  return node_content_form($node, $form_state);
-}
-/**
- * Implements hook_view() to display items and form
- */
-function todo_list_view($node, $view_mode) {
-  // Get todo_items
-  $items = todo_item_load_items_by_lid($node->nid);
-  // Append todo_items to $node->content
-  $node->content['todos']['#markup'] = '<div>Todo items</div>';
-  $node->content['todos']['#markup'] .= '<ul>';
-  foreach ($items as $item) {
-    $node->content['todos']['#markup'] .= '<li>';
-    $node->content['todos']['#markup'] .= $item->title;
-    $node->content['todos']['#markup'] .= ' ' . l(t('Edit'), 'todo-item/'.$item->pid . '/edit');
-    $node->content['todos']['#markup'] .= '</li>';
-  }
-  $node->content['todos']['#markup'] .= '</ul>';
-  $node->content['todos']['#weight'] = 90;
-  // Get todo_item form
-  $item_form = array(
-    drupal_get_form('todo_item_form', $node->nid)
-  );
-  $node->content['list_form'] = array(
-    $item_form,
-  );
-  $node->content['list_form']['#weight'] = 100;
-  return $node;
-}
 
 /**
  * Implements hook_entity_info().
  */
 function todos_entity_info() {
   return array(
+    'todo_list' => array(
+      'label' => t('Todo List'),
+      'plural label' => t('Todo Lists'),
+      'description' => t('Entity type representing a todo list'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIController',
+      'base table' => 'todo_list',
+      'fieldable' => TRUE,
+      'entity keys' => array(
+        'id' => 'lid',
+      ),
+      'label callback' => 'entity_class_label',
+      'uri callback' => 'entity_class_uri',
+    ),
     'todo_item' => array(
       'label' => t('Todo Item'),
       'plural label' => t('Todo Items'),
-      'description' => t('Entity type used by teh Todo List Content Type module'),
+      'description' => t('Entity type representing a todo item'),
       'entity class' => 'Entity',
       'controller class' => 'EntityAPIController',
       'base table' => 'todo_item',
       'fieldable' => TRUE,
       'entity keys' => array(
-        'id' => 'pid',
-        // 'bundle' => 'name', // Not sure if this is needed
+        'id' => 'iid',
       ),
       'label callback' => 'entity_class_label',
       'uri callback' => 'entity_class_uri',
     ),
   );
 }
+
 /**
- * Loads todo_item from url wildcard
+ * PAGE CALLBACKS
  */
-function todo_item_load($arg) {
-  $item = todo_item_load_item_by_pid($arg);
-  return $item;
+
+/**
+ * Displays multiple lists for a given user & form for adding new list
+ *
+ * @param $user
+ *   User/author of lists
+ */
+function todos_user_todo_lists (){
+  global $user;
+  $db_query_results = todo_lists_load($user->uid); 
+  $lists = array();
+  foreach ($db_query_results as $result) {
+    $lists[] = $result;
+  }
+  $render_array = array(
+    'todo_lists' => array(
+      'lists' => $lists,
+      '#theme' => 'todo_lists',
+    ),
+    'todo_list_add_form' => drupal_get_form('todo_list_add_form'),
+  );
+  return $render_array;
 }
+
+/**
+ * Displays items for a given list & form for adding new list
+ *
+ * @param $todo_list
+ *   todo_list entity object
+ */
+function todos_todo_list($todo_list) {
+  $db_query_results = todos_item_load_items_by_lid($todo_list->lid);
+  $items = array();
+  foreach ($db_query_results as $item) {
+    $items[] = $item;
+  }
+  $render_array = array(
+    'todo_list' => array(
+      'items' => $items,
+      '#theme' => 'todo_list',
+    ),
+    'todo_item_add_form' => drupal_get_form('todo_item_add_form', $todo_list->lid),
+  );
+  return $render_array;
+}
+
+/**
+ * Updates a todo_item as completed and redirects back to todo_list
+ *
+ * @param $todo_item
+ *   todo_item entity object 
+ */
+function todos_todo_item_completed($todo_item) {
+  $todo_item->status = 0;
+  $item_title = $todo_item->title;
+  $redirect_path = 'todos/list/' . $todo_item->lid;
+  /**/
+  if ($todo_item->save()) drupal_set_message(t('Item marked completed'));
+  else drupal_set_message(t('The item could not be updated. Please contact the site administrator for troubleshooting'));
+  /**/
+  drupal_goto($redirect_path, array(), 301);
+}
+
+/**
+ * FORMS
+ */
+
+/**
+ * Generates form for adding new todo_list entities
+ */
+function todo_list_add_form() {
+  $form['title'] = array(
+    //'#title' => t('Add a new list'),
+    '#type' => 'textfield',
+    '#maxlength' => 128,
+    '#required' => TRUE,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add new list'),
+  );
+  return $form;
+}
+/**
+ * Hadles form submission for todo_list_add_form
+   */
+function todo_list_add_form_submit($form, &$form_state) {
+  global $user;
+  $values = array(
+    'title' => $form_state['values']['title'],
+    'uid' => $user->uid,
+    'created' => time(),
+  );
+  $entity = entity_create('todo_list', $values);
+  if (! $entity->save()) {
+    drupal_set_message(t('List could not be created. Please contact the site adminstrator for more information.'), 'error');
+  }
+  else {
+    $form_state['redirect'] = 'todos/list/'.$entity->lid;
+  }
+}
+/**
+ * Generates edit form for todo_list entities
+ * 
+ * Entity object loaded in url can be accessed by:
+ * $form_state['build_info']['args'][0][1]
+ */
+function todo_list_edit_form($form, $form_state) {
+  return $form;
+}
+/** Form debugging info. Use with devel module. ** /
+function todos_form_alter($form, &$form_state) {
+  dpm($form);
+}
+/**/
+
+
 /**
  * Defines the add a todo item form
  */
-function todo_item_form($form, &$form_state) {
+function todo_item_add_form($form, &$form_state) {
   $lid = $form_state['build_info']['args'][0];
   $form['lid'] = array(
     '#type' => 'value',
     '#value' => $lid,
   );
   $form['title'] = array(
-    '#title' => t('Add an item'),
     '#type' => 'textfield',
-    '#description' => t('Enter new item'),
     '#maxlength' => 128,
     '#required' => TRUE,
   );
-  $form['add'] = array(
+  $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Add'),
+    '#value' => t('Add a new item'),
   );
   return $form;
 }
 /**
- * Handles todo item form validation
- */
-function todo_item_form_validate($form, &$form_state) {
-}
+ * Handles todo_item form validation
+ * No special validation needed yet
+ * /
+function todo_item_add_form_validate($form, &$form_state) {
+}/**/
 /**
- * Handles todo item form submission
+ * Handles todo_item form submission
  */
-function todo_item_form_submit($form, &$form_state) {
+function todo_item_add_form_submit($form, &$form_state) {
   global $user;
   $values = array(
     'title' => $form_state['values']['title'],
@@ -203,7 +283,6 @@ function todo_item_form_submit($form, &$form_state) {
   );
   $entity = entity_create('todo_item', $values);
   $entity->save();
-  $form_state['redirect'] = 'node/' . $form_state['values']['lid'];
 }
 /**
  * Defines the edit a todo item form
@@ -225,6 +304,11 @@ function todo_item_edit_form($form, &$form_state) {
     '#type' => 'submit',
     '#value' => t('Save'),
   );
+  $form['delete'] = array(
+    '#type' => 'submit',
+    '#value' => t('Delete'),
+    '#submit' => array('todo_item_delete_submit'),
+  );
   return $form;
 }
 /**
@@ -232,7 +316,7 @@ function todo_item_edit_form($form, &$form_state) {
  */
 function todo_item_edit_form_validate($form, &$form_state) {}
 /**
-* Handles todo_item edit form submission
+ * Handles todo_item edit form submission
  */
 function todo_item_edit_form_submit($form, &$form_state) {
   $entity = $form_state['build_info']['args'][0][1];
@@ -241,17 +325,165 @@ function todo_item_edit_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'node/' . $entity->lid;
 }
 /**
- * Loads todo items for a given primary id
+ * Handles todo_item edit form submission when delete button is clicked
  */
-function todo_item_load_item_by_pid($pid) {
-  return entity_load('todo_item', array($pid));
+function todo_item_delete_submit($form, &$form_state) {
+  $entity = $form_state['build_info']['args'][0][1];
+  $destination = array();
+  if (isset($_GET['destination'])) {
+    $destination = drupal_get_destination();
+    unset($_GET['destination']);
+  }
+  $form_state['redirect'] = array('todo-item/'. $entity->pid . '/delete', array('query' => $destination));
 }
 /**
- * Loads todo items for a given todo list
+ * Item delete confirm form
  */
-function todo_item_load_items_by_lid($lid) {
-  $result = db_query('SELECT pid, title FROM {todo_item} WHERE lid = :lid', 
-    array(':lid' => $lid));
+function todo_item_delete_confirm($form, &$form_state) {
+  $entity = $form_state['build_info']['args'][0][1];
+  $form['pid'] = array(
+    '#type' => 'value',
+    '#value' => $entity->pid,
+  );
+  return confirm_form($form,
+    t('Are you sure you want to delete %title?', array('%title' => $entity->title)),
+    t('This action cannot be undone.'),
+    t('Delete'),
+    t('Cancel')
+  );
+}
+/**
+ * DATA LOADING FUNCTIONS
+ */
+/**
+ * Loads todo lists for a given user
+ */
+function todo_lists_load($uid) {
+  $result = db_query('SELECT lid, title, items FROM {todo_list} WHERE uid = :uid ORDER BY items DESC',
+    array(':uid' => $uid)
+  );
   return $result;
 }
+/**
+ * Loads todo_items for a given list
+ */
+function todo_list_load($lid) {
+  $item = entity_load_single('todo_list', $lid);
+  return $item;
+}
+/**
+ * Loads todo_item from url wildcard
+ */
+function todo_item_load($iid) {
+  $item = entity_load_single('todo_item', $iid);
+  return $item;
+}
+/**
+ * Loads todo_item for a given primary id or 'item id'
+ */
+function todos_load_item_by_pid($iid) {
+  return entity_load('todo_item', array($iid));
+}
+/**
+ * Loads todo_item entities for a given todo_list
+ *
+ * @param $lid
+ *   todo_list primary key
+ * @parma $all
+ *   Boolean instructing whether all items should be loaded
+ */
+function todos_item_load_items_by_lid($lid, $all=FALSE) {
+  if ($all) {
+    $query_string = 'SELECT iid, title, created FROM {todo_item} WHERE lid = :lid ORDER BY created DESC';
+  } else {
+    $query_string = 'SELECT iid, title, created FROM {todo_item} WHERE lid = :lid AND status = 1 ORDER BY created DESC';
+  }
+  $result = db_query($query_string, array(':lid' => $lid));
+  return $result;
+}
+/**
+ * Returns entity title
+ */
+function todos_entity_title($entity) {
+  return $entity->title;
+}
 
+/**
+ * THEME FUNCTIONS
+ */
+
+/**
+ * Implements hook_theme().
+ * Registers theme functions and template files
+ */
+function todos_theme($existing, $type, $theme, $path) {
+  return array(
+    'todo_lists' => array(
+      'render element' => 'todo lists',
+      'template' => 'todo-lists',
+      'path' => $path .'/theme',
+    ),
+    'todo_list' => array(
+      'render element' => 'todo list',
+      'template' => 'todo-list',
+      'path' => $path . '/theme',
+    ),
+    'todo_item' => array(
+      'render element' => 'item',
+      'template' => 'todo-item',
+      'path' => $path . '/theme',
+    ),
+  );
+}
+
+/**
+ * Processes variables for todo_lists template file
+ */
+function todos_preprocess_todo_lists(&$vars) {
+  $vars['lists'] = '';
+  if ( empty($vars['todo lists']['lists']) ) { 
+    $vars['lists'] = 'No todo lists found.';
+  } else {
+    // Render lists
+    $vars['lists'] .= '<ul>';
+    foreach ($vars['todo lists']['lists'] as $list) {
+      $vars['lists'] .= '<li>'
+        . l($list->title, 'todos/list/'.$list->lid, array(
+          'attributes' => array(
+            'title' => $list->title,
+            'class' => 'todo-list',
+          )
+        ))
+        . '</li>';
+    }
+  }
+  $vars['lists'] .= '</ul>';
+}
+/**/
+/**
+ * Processes variables for todo_list template file
+ */
+function todos_preprocess_todo_list(&$vars) {
+  $vars['items'] = '';
+  if ( empty($vars['todo list']['items']) ) { 
+    $vars['items'] = 'No active todo items found.';
+  } else {
+    // Render items
+    $vars['items'] .= '<ul>';
+    foreach ($vars['todo list']['items'] as $item) {
+      $vars['items'] .= '<li>'
+        . $item->title
+        . '<div class="todo-item-actions">'
+        . l('completed', 'todos/item/'.$item->iid.'/completed', array(
+            'attributes' => array(
+              'title' => 'Mark item as complete',
+              'class' => 'todo-item-action',
+            )
+          ))
+        . '</div>'
+        . '</li>';
+    }
+  }
+  $vars['items'] .= '</ul>';
+}
+/**/

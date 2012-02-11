@@ -2,31 +2,64 @@
 
 /**
  * @file
- * Install file for Todo List Content Type module
+ * Install file for Todos module.
  */
 
 /**
- * Implements hook_install().
- */
-function todos_install() {
-  $t = get_t();
-  node_types_rebuild();
-  $types = node_type_get_types();
-  // Add a body field and set the body label
-  node_add_body_field($types['todo_list'], $t('Description'));
-  $body_instance = field_info_instance('node', 'body', 'todo_list');
-  $body_instance['type'] = 'text_summary_or_trimmed';
-  field_update_instance($body_instance);
-}
-/**
- * Implements hook_schema() and adds a table to store todo items
+ * Implements hook_schema().
+ * Adds a tables to store todo_list and todo_item entity data
  */
 function todos_schema() {
   return array(
-    'todo_item' => array(
-      'description' => 'Stores todo_items for todo lists.',
+    'todo_list' => array(
+      'description' => 'Stores todo_list entity data for todos module.',
       'fields' => array(
-        'pid' => array(
+        'lid' => array(
+          'description' => 'Primary key: Unique todo_item ID.',
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+        ),
+        'title' => array(
+          'description' => 'The title of the todo_list entity.',
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+        ),
+        'created' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+          'description' => 'The UNIX timestamp at item creation.',
+        ),
+        'items' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+          'description' => 'Number of active todo_items for this list.',
+        ),
+        'uid' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 0,
+          'description' => 'The {users}.uid of the associated user.',
+        ),
+      ),
+      'indexes' => array(
+        'uid' => array('uid'),
+      ),
+      'foreign keys' => array(
+        'uid' => array('users' => 'uid'),
+      ),
+      'primary key' => array('lid'),
+    ),
+    'todo_item' => array(
+      'description' => 'Stores todo_item entity data for todos module.',
+      'fields' => array(
+        'iid' => array(
           'description' => 'Primary key: Unique todo_item ID.',
           'type' => 'serial',
           'unsigned' => TRUE,
@@ -43,7 +76,7 @@ function todos_schema() {
           'unsigned' => TRUE,
           'not null' => TRUE,
           'default' => 0,
-          'description' => 'The {node}.nid of the associated node.',
+          'description' => 'The {todo_lists}.lid of the associated todo_list entity.',
         ),
         'created' => array(
           'type' => 'int',
@@ -51,6 +84,13 @@ function todos_schema() {
           'not null' => TRUE,
           'default' => 0,
           'description' => 'The UNIX timestamp at item creation.',
+        ),
+        'status' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'default' => 1,
+          'description' => 'Integer representing status with 0 representing complete.',
         ),
         'uid' => array(
           'type' => 'int',
@@ -65,9 +105,9 @@ function todos_schema() {
       ),
       'foreign keys' => array(
         'uid' => array('users' => 'uid'),
-        //'name' => array('entity_todo_items' => 'name'),
+        'lid' => array('todo_lists' => 'lid'),
       ),
-      'primary key' => array('pid'),
+      'primary key' => array('iid'),
     ),
   );
 }
