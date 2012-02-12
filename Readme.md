@@ -2,7 +2,8 @@ Drupal To-Dos Module
 ===============
 
 This module helps users keep track of their own to-do lists. It's in early development, so 
-it has very minimal functionality.
+it has very minimal functionality. Once installed, you should see a link to your own to-do lists
+and a drupal block displaying your lists.
 
 ### Requires
 
