@@ -90,7 +90,7 @@ function todos_schema() {
           'unsigned' => TRUE,
           'not null' => TRUE,
           'default' => 1,
-          'description' => 'Integer representing status with 0 representing complete.',
+          'description' => 'Integer representing status with 0 representing completion.',
         ),
         'uid' => array(
           'type' => 'int',

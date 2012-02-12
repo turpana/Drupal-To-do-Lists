@@ -22,26 +22,19 @@ class TodosTestCase extends DrupalWebTestCase {
   function setUp() {
     parent::setUp('todos');
     // Create users.
-    $permissions = array(
-      'access content', 
-      'create todo_list content', 
-      'edit own todo_list content',
-      'delete own todo_list content'
-    );
+    $permissions = array('manage own todos');
     $this->can_create_todos = $this->drupalCreateUser($permissions);
-    $this->other_user = $this->drupalCreateUser(array('access content'));
+    $this->other_user = $this->drupalCreateUser();
   }
 
-  function testContentType() {
+  function testTodoLists() {
 
     $this->drupalLogin($this->can_create_todos);
 
     // Create a new todo list.
-    $edit = array(
-      'title' => $this->randomName(8),
-      'body[und][0][value]' => $this->randomName(8),
-    );
-    $this->drupalPost('node/add/todo-list', $edit, t('Save'));
+    $edit = array('title' => $this->randomName(8));
+    $this->drupalPost('todos', array(), t('Create new list'));
+    /* * /
     $this->assertText("Todo List " . $edit['title'] . " has been created", "Found node creation message");
 
     // Update todo list title and description
@@ -67,11 +60,13 @@ class TodosTestCase extends DrupalWebTestCase {
     $this->drupalPost('node/1/edit', array(), t('Delete'));
     $this->drupalPost('node/1/delete',array(), t('Delete'));
     $this->assertText("Todo List " . $edited['title'] . " has been deleted.", "Found node delete message");
+    /**/
 
   }
 
-  function testEntityType() {
+  function testTodoItem() {
     $this->drupalLogin($this->can_create_todos);
+    /** /
 
     // Create new todo
     $todo_list = array(
@@ -88,16 +83,18 @@ class TodosTestCase extends DrupalWebTestCase {
     $edit_todo['title'] = $this->randomName(8);
     $this->drupalPost('todo-item/1/edit', $edit_todo, t('Save'));
     $this->assertText($edit_todo['title']);
+    // Mark a todo_item as done
     // Create multiple todos
     $edit_todo_2 = array(
       'title' => $this->randomName(8),
     );
     $this->drupalPost('node/1', $edit_todo_2, t('Add'));
     $this->assertText($edit_todo_2['title']);
-    $edit_todo_3 = array(
-      'title' => $this->randomName(129),
-    );
-    $this->drupalPost('node/1', $edit_todo_3, t('Add'));
+    // Delete a todo_item
+    $this->drupalPost('todo-item/1/edit', $edit_todo, t('Delete'));
+    $this->drupalPost('todo-item/1/delete', $edit_todo, t('Delete'));
+    $this->drupalGet('node/1');
+    $this->assertNoText($edit_todo['title'], t('Make sure todo item title not present after eletion'));
+    /**/
   }
-  // Todos create test to make sure nodes and table are deleted on uninstall
 }

@@ -3,6 +3,8 @@ description = Provides todo lists for things that need to get done.
 package = Productivity
 core = 7.x
 dependencies[] = entity
+files[] = includes/todo_item.controller.inc
 files[] = todos.install
 files[] = todos.module
 files[] = todos.test
+
