@@ -230,7 +230,7 @@ function todos_block_info() {
  * Implements hook_block_view().
  * Loads the content for the block.
  *
- * @parma delta
+ * @param delta
  *   Which block to display, when there are multiple defined by module
  */
 function todos_block_view($delta) {
