@@ -122,6 +122,11 @@ function todos_entity_info() {
       'entity keys' => array(
         'id' => 'lid',
       ),
+      'bundles' => array(
+        'todo_list' => array(
+          'label' => 'To-do List',
+        ),
+      ),
       'label callback' => 'entity_class_label',
       'uri callback' => 'entity_class_uri',
     ),
@@ -130,7 +135,7 @@ function todos_entity_info() {
       'plural label' => t('Todo Items'),
       'description' => t('Entity type representing a todo item'),
       'entity class' => 'Entity',
-      'controller class' => 'TodoItemController',
+      'controller class' => 'EntityAPIController',
       'base table' => 'todo_item',
       'fieldable' => TRUE,
       'entity keys' => array(
@@ -457,6 +462,10 @@ function todo_item_edit_form($form, &$form_state) {
     '#type' => 'submit',
     '#value' => t('Save'),
   );
+  $form['delete'] = array(
+    '#type' => 'submit',
+    '#value' => t('Delete'),
+  );
   return $form;
 }
 /**
@@ -468,9 +477,17 @@ function todo_item_edit_form_validate($form, &$form_state) {}
  */
 function todo_item_edit_form_submit($form, &$form_state) {
   $entity = $form_state['build_info']['args'][0];
-  $entity->title = $form_state['values']['title'];
-  $entity->status = $form_state['values']['status'];
-  if($entity->save()) drupal_set_message(t('To-do list was successfully updated.'));
+  switch($form_state['values']['op']) {
+    case $form_state['values']['delete']:
+      if ($entity->delete()) drupal_set_message(t('To-do item was successfully deleted.'));
+      break;
+    case $form_state['values']['save']:
+    default:
+      $entity->title = $form_state['values']['title'];
+      $entity->status = $form_state['values']['status'];
+      if($entity->save()) drupal_set_message(t('To-do item was successfully updated.'));
+      break;
+  }
   $form_state['redirect'] = 'todos/list/' . $entity->lid;
 }
 
@@ -478,7 +495,7 @@ function todo_item_edit_form_submit($form, &$form_state) {
  * DATA LOADING FUNCTIONS
  */
 /**
- * Loads todo lists for a given user
+ * Loads todo_list entities for a given user
  */
 function todo_lists_load($uid) {
   $result = db_query('SELECT lid, title, items FROM {todo_list} WHERE uid = :uid ORDER BY items DESC',
@@ -487,7 +504,7 @@ function todo_lists_load($uid) {
   return $result;
 }
 /**
- * Loads todo_items for a given list
+ * Loads todo_item entities for a given list
  */
 function todo_list_load($lid) {
   $item = entity_load_single('todo_list', $lid);
@@ -528,6 +545,46 @@ function todos_item_load_items_by_lid($lid, $all=FALSE) {
  */
 function todos_entity_title($entity) {
   return $entity->title;
+}
+
+/**
+ * DATA UPDATE FUNCTIONS/HOOKS
+ */
+/**
+ * Implements hook_entity_insert().
+function todos_entity_insert($entity, $entity_type) {}
+ */
+/**
+ * Implements hook_entity_update().
+function todos_entity_update($entity, $entity_type) {}
+ */
+/**
+ * Implements hook_entity_delete().
+function todos_entity_delete($entity, $entity_type) {}
+ */
+/**
+ * Implements hook_entity_type_insert() for todo_item entity type
+ * Updates referenced todo_list to keep number of active items current
+ */
+function todos_todo_item_insert($entity) {
+  $entity_list = entity_load_single('todo_list', $entity->lid);
+  $entity_list->save();
+}
+/**
+ * Implements hook_entity_type_update() for todo_item entity type
+ * Updates referenced todo_list to keep number of active items current
+ */
+function todos_todo_item_update($entity) {
+  $entity_list = entity_load_single('todo_list', $entity->lid);
+  $entity_list->save();
+}
+/**
+ * Implements hook_entity_type_delete() for todo_item entity type
+ * Updates referenced todo_list to keep number of active items current
+ */
+function todos_todo_item_delete($entity) {
+  $entity_list = entity_load_single('todo_list', $entity->lid);
+  $entity_list->save();
 }
 
 /**
