@@ -116,7 +116,7 @@ function todos_entity_info() {
       'plural label' => t('Todo Lists'),
       'description' => t('Entity type representing a todo list'),
       'entity class' => 'Entity',
-      'controller class' => 'EntityAPIController',
+      'controller class' => 'TodoListController',
       'base table' => 'todo_list',
       'fieldable' => TRUE,
       'entity keys' => array(
@@ -130,7 +130,7 @@ function todos_entity_info() {
       'plural label' => t('Todo Items'),
       'description' => t('Entity type representing a todo item'),
       'entity class' => 'Entity',
-      'controller class' => 'TodoItemAPIController',
+      'controller class' => 'TodoItemController',
       'base table' => 'todo_item',
       'fieldable' => TRUE,
       'entity keys' => array(
