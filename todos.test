@@ -34,6 +34,7 @@ class TodosTestCase extends DrupalWebTestCase {
     // Create a new todo list.
     $edit = array('title' => $this->randomName(8));
     $this->drupalPost('todos', array(), t('Create new list'));
+    $this->drupalPost('todos', $edit, t('Save'));
     /* * /
     $this->assertText("Todo List " . $edit['title'] . " has been created", "Found node creation message");
 
